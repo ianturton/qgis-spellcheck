@@ -35,7 +35,7 @@ from .spelling_dialog import SpellingDialog
 
 from qgis.utils import plugins
 from qgis.core import check, QgsAbstractValidityCheck, QgsValidityCheckResult
-from qgis.core import QgsLayoutItemLabel
+from qgis.core import QgsLayoutItemLabel, Qgis, QgsMessageLog
 import string
 from spellchecker import SpellChecker
 
@@ -43,7 +43,25 @@ from spellchecker import SpellChecker
 class Spelling:
     """QGIS Plugin Implementation."""
 
-    checker = SpellChecker()
+    checker = None
+    dlg = None
+    # TODO - work out how to construct this from the list returned by SpellChecker.languages
+    langs = {'English': 'en',
+             'Spanish': 'es',
+             'French': 'fr',
+             'Portuguese': 'pt',
+             'German': 'de',
+             'Italian': 'it',
+             'Russian': 'ru',
+             'Arabic': 'ar',
+             'Basque': 'eu',
+             'Latvian': 'lv',
+             'Dutch': 'nl'
+             }
+
+    def getLocale(self):
+        self.locale = QSettings().value('locale/userLocale')[0:2]
+        return self.locale
 
     def __init__(self, iface):
         """Constructor.
@@ -58,11 +76,11 @@ class Spelling:
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
+        self.getLocale()
         locale_path = os.path.join(
             self.plugin_dir,
             'i18n',
-            'Spelling_{}.qm'.format(locale))
+            'Spelling_{}.qm'.format(self.locale))
 
         if os.path.exists(locale_path):
             self.translator = QTranslator()
@@ -194,30 +212,17 @@ class Spelling:
 
     def run(self):
         """Run method that performs all the real work"""
-        # TODO - work out how to construct this from the list returned by SpellChecker.languages
-        langs = {'English': 'en',
-                 'Spanish': 'es',
-                 'French': 'fr',
-                 'Portuguese': 'pt',
-                 'German': 'de',
-                 'Italian': 'it',
-                 'Russian': 'ru',
-                 'Arabic': 'ar',
-                 'Basque': 'eu',
-                 'Latvian': 'lv',
-                 'Dutch': 'nl'
-                 }
+
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start:
             self.first_start = False
             self.dlg = SpellingDialog()
-            self.dlg.comboBox.addItems(langs.keys())
+            self.dlg.comboBox.addItems(self.langs.keys())
             self.dlg.lineEdit.clear()
             self.dlg.pushButton.clicked.connect(self.select_output_file)
-            self.create_checker('en')
+            self.create_checker(self.getLocale())
             # TODO look up local language and select that if it exists
-
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
@@ -225,11 +230,15 @@ class Spelling:
         # See if OK was pressed
         if result:
             idx = self.dlg.comboBox.currentText()
-            self.create_checker(langs[idx])
+            self.create_checker(self.langs[idx])
 
-    def create_checker(self, language):
+    def create_checker(self, language=None):
+        if not language:
+            language = self.getLocale()
+        QgsMessageLog.logMessage(f"creating a checker in {language}", 'SpellChecker',
+                                 level=Qgis.Info)
         self.checker = SpellChecker(language=language)
-        if self.dlg.lineEdit.text():
+        if self.dlg and self.dlg.lineEdit.text():
             dictionary = Path(self.dlg.lineEdit.text())
         else:
             dictionary = Path(Path(self.iface.userProfileManager().userProfile().folder()),
@@ -237,7 +246,11 @@ class Spelling:
         if not dictionary.exists():
             open(dictionary, 'w').close()
 
+        QgsMessageLog.logMessage(f"Loading personal dictionary {dictionary}", 'SpellChecker',
+                                 level=Qgis.Info)
         self.checker.word_frequency.load_text_file(dictionary)
+
+        return self.checker
 
 
 @check.register(type=QgsAbstractValidityCheck.TypeLayoutCheck)
@@ -248,7 +261,7 @@ def layout_check_spelling(context, feedback):
     layout = context.layout
     results = []
     if not checker:
-        checker = SpellChecker()
+        checker = _instance.create_checker()
 
     for i in layout.items():
         if isinstance(i, QgsLayoutItemLabel):
