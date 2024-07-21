@@ -6,7 +6,7 @@
 name=Spell Checker
 qgisMinimumVersion=3.0
 description=Check the spelling of words in Print Layout elements
-version=0.1
+version=0.2
 author=Ian Turton, GDSG, University of Glasgow
 email=ian@ianturton.com
 
