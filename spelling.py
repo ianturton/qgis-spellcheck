@@ -253,6 +253,8 @@ class Spelling:
         return self.checker
 
 
+# TODO see if we can change this to be a validity check on labels rather than the whole layout
+# It should be possible to create and register one
 @check.register(type=QgsAbstractValidityCheck.TypeLayoutCheck)
 def layout_check_spelling(context, feedback):
     _instance = plugins['qgis-spellcheck']
@@ -272,6 +274,7 @@ def layout_check_spelling(context, feedback):
                 res = QgsValidityCheckResult()
                 res.type = QgsValidityCheckResult.Warning
                 res.title = 'Spelling Error?'
+                # TODO work out how to accept the suggestion and change it in the text
                 template = f"""
                 <strong>'{word}</strong>' may be misspelled, would
                 '<strong>{checker.correction(word)}</strong>' be a better choice?

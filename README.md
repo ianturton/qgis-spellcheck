@@ -1,10 +1,5 @@
 # Spell checker for Qgis Print Layouts
 
-## Installation 
-
-Before you can use this plugin you **must** install the `pyspellchecker` using your preferred python package 
-manager. I used `pip install pyspellchecker`.
-
 ## Usage 
 
 When you attempt to output a print layout all the **text** elements of the layout will be scanned for 

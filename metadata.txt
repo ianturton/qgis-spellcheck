@@ -1,13 +1,15 @@
 # This file contains metadata for your plugin.
 
-# This file should be included when you package your plugin.# Mandatory items:
+# This file should be included when you package your plugin.
+# Mandatory items:
 
 [general]
 name=Spell Checker
 qgisMinimumVersion=3.0
+qgisMaximumVersion=4.99
 description=Check the spelling of words in Print Layout elements
 version=0.2
-author=Ian Turton, GDSG, University of Glasgow
+author=Ian Turton, Ian Turton Ltd
 email=ian@ianturton.com
 
 about=This pluging provides the ability to check the spelling of Print Layout elements. It flags misspelled words, suggests corrections and allows the user to store unknown words in a local dictionary.
@@ -37,7 +39,7 @@ deprecated=False
 # Since QGIS 3.8, a comma separated list of plugins to be installed
 # (or upgraded) can be specified.
 # Check the documentation for more information.
-# plugin_dependencies=
+plugin_dependencies=qpip
 
 Category of the plugin: Raster, Vector, Database or Web
 # category=
